@@ -6,10 +6,15 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-moss-darkest: #090C08;
+  --color-moss-dark: #141C15;
+  --color-moss-muted: #3A4D39;
+  --color-moss-accent: #739072;
+
+  --color-moss-glow: #A2FF86; 
+  --color-ai-indigo: #818CF8;
+
+  --spacing-18: 4.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
