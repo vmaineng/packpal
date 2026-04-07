@@ -1,9 +1,10 @@
-import {useState, useCallback} from 'react';
+import { useState, useCallback } from "react";
+import { fetchAppsForLocation, reverseGeocode, searchPlaces } from "../lib/api";
 import type { LocationResult, SearchState } from "../types";
 
 export function useAppSearch() {
-  const [searchState, setSearchState] = useState<SearchState>({
-       status: "idle",
+  const [state, setState] = useState<SearchState>({
+    status: "idle",
     location: null,
     apps: null,
     error: null,
@@ -13,10 +14,10 @@ export function useAppSearch() {
   const [suggestions, setSuggestions] = useState<LocationResult[]>([]);
 
   const searchLocation = useCallback(async (location: LocationResult) => {
-    setSearchState({ status: "loading", location, apps: null, error: null, cached: false });
+    setState({ status: "loading", location, apps: null, error: null, cached: false });
     try {
       const apps = await fetchAppsForLocation(location);
-      setSearchState({
+      setState({
         status: "success",
         location,
         apps,
@@ -24,7 +25,7 @@ export function useAppSearch() {
         cached: apps.cached,
       });
     } catch (err: any) {
-      setSearchState((s) => ({
+      setState((s) => ({
         ...s,
         status: "error",
         error: err.message ?? "Failed to load recommendations",
@@ -34,21 +35,34 @@ export function useAppSearch() {
 
   const handleMapClick = useCallback(
     async (lng: number, lat: number) => {
-        setSearchState((s) => ({...s, status:"searching"}));
-        const location = await reverseGeocode(lng, lat);
-       if (!location) {
-        setSearchState((s) => ({ ...s, status: "error", error: "Could not identify location" }));
+      setState((s) => ({ ...s, status: "searching" }));
+      const location = await reverseGeocode(lng, lat);
+      if (!location) {
+        setState((s) => ({ ...s, status: "error", error: "Could not identify location" }));
         return;
       }
       await searchLocation(location);
-    }
+    },
     [searchLocation]
   );
 
-}
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const results = await searchPlaces(query);
+    setSuggestions(results);
+  }, []);
 
-return {
+  const clearSuggestions = useCallback(() => setSuggestions([]), []);
+
+  return {
     state,
-    suggestions
+    suggestions,
+    searchLocation,
     handleMapClick,
+    handleSearch,
+    clearSuggestions,
+  };
 }

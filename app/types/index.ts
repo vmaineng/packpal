@@ -1,48 +1,42 @@
-import {useState, useCallback} from 'react';
-import type { LocationResult, SearchState } from "../types";
 
-export function useAppSearch() {
-  const [searchState, setSearchState] = useState<SearchState>({
-       status: "idle",
-    location: null,
-    apps: null,
-    error: null,
-    cached: false,
-  });
+export type AppCategory = "transport" | "food" | "sleep";
 
-  const [suggestions, setSuggestions] = useState<LocationResult[]>([]);
+export interface TravelApp {
+  id: string;
+  name: string;
+  category: AppCategory;
+  description: string;
+  icon_url: string;
+  app_store_url?: string;
+  play_store_url?: string;
+  website_url?: string;
+  is_cash_only_warning?: boolean; 
+  notes?: string; 
+}
 
-  const searchLocation = useCallback(async (location: LocationResult) => {
-    setSearchState({ status: "loading", location, apps: null, error: null, cached: false });
-    try {
-      const apps = await fetchAppsForLocation(location);
-      setSearchState({
-        status: "success",
-        location,
-        apps,
-        error: null,
-        cached: apps.cached,
-      });
-    } catch (err: any) {
-      setSearchState((s) => ({
-        ...s,
-        status: "error",
-        error: err.message ?? "Failed to load recommendations",
-      }));
-    }
-  }, []);
+export interface RegionAppData {
+  country_code: string;
+  country_name: string;
+  city?: string;
+  transport: TravelApp[];
+  food: TravelApp[];
+  sleep: TravelApp[];
+  cash_only_regions?: string[]; 
+  general_tips?: string[];
+}
 
-  const handleMapClick = useCallback(
-    async (lng: number, lat: number) => {
-        setSearchState((s) => ({...s, status:"searching"}));
-        const location = await reverseGeocode(lng, lat);
-       if (!location) {
-        setSearchState((s) => ({ ...s, status: "error", error: "Could not identify location" }));
-        return;
-      }
-      await searchLocation(location);
-    }
-    [searchLocation]
-  );
+export interface LocationResult {
+  place_name: string;
+  country: string;
+  country_code: string;
+  city?: string;
+  coordinates: [number, number]; 
+}
 
+export interface SearchState {
+  status: "idle" | "searching" | "loading" | "success" | "error";
+  location: LocationResult | null;
+  apps: RegionAppData | null;
+  error: string | null;
+  cached: boolean;
 }
