@@ -29,6 +29,17 @@ export interface AISearchResult {
 }
 
 
+export interface VoteMap {
+  [app_id: string]: { accurate: number; inaccurate: number; score: number };
+}
+
+export async function fetchVotes(countryCode: string): Promise<VoteMap> {
+  const res = await fetch(`${BASE}/vote?country_code=${countryCode}`, { headers: HEADERS() });
+  if (!res.ok) return {};
+  return res.json();
+}
+
+
 export async function fetchAppsForLocation(
   location: LocationResult
 ): Promise<RegionAppData & { cached: boolean }> {
@@ -56,6 +67,24 @@ export async function runAISearch(
   });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `${res.status}`);
   return res.json();
+
+}
+
+export async function submitVote(
+  appId: string,
+  countryCode: string,
+  voteType: "accurate" | "inaccurate",
+  fingerprint: string
+): Promise<{ success: boolean; counts?: { accurate_count: number; inaccurate_count: number } }> {
+  const res = await fetch(`${BASE}/vote`, {
+    method: "POST",
+    headers: HEADERS(),
+    body: JSON.stringify({ app_id: appId, country_code: countryCode, vote_type: voteType, fingerprint }),
+  });
+  const data = await res.json();
+  if (res.status === 409) return { success: false };
+  if (!res.ok) throw new Error(data.error ?? `${res.status}`);
+  return data;
 }
 
 export async function reverseGeocode(lng: number, lat: number): Promise<LocationResult | null> {
