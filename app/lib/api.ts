@@ -88,7 +88,7 @@ export async function submitVote(
 }
 
 export async function reverseGeocode(lng: number, lat: number): Promise<LocationResult | null> {
-  const token = process.env.MAPBOX_TOKEN || "";
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
   const res = await fetch(
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=country,place`
   );
@@ -109,7 +109,7 @@ export async function reverseGeocode(lng: number, lat: number): Promise<Location
 
 export async function searchPlaces(query: string): Promise<LocationResult[]> {
   if (!query.trim()) return [];
-  const token = process.env.VITE_MAPBOX_TOKEN;
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
   const res = await fetch(
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&types=country,place,region&limit=5`
   );

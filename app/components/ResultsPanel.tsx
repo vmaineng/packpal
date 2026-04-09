@@ -1,3 +1,4 @@
+"use client";
 import type { SearchState } from "../types";
 import { AppCard } from "./AppCard";
 import type { VoteMap } from "../lib/api";
@@ -7,19 +8,19 @@ const CATEGORY_META = {
   transport: {
     label: "Getting Around",
     emoji: "🚌",
-    color: "#3b82f6",
+    borderColor: "border-blue-500",
     tip: "Taxis, rides, trains & buses",
   },
   food: {
     label: "Food & Dining",
     emoji: "🍜",
-    color: "#f97316",
+    borderColor: "border-orange-500",
     tip: "Where to eat — and where to bring cash",
   },
   sleep: {
     label: "Places to Sleep",
     emoji: "🛏️",
-    color: "#8b5cf6",
+    borderColor: "border-purple-500",
     tip: "Hotels, hostels, and unique stays",
   },
 } as const;
@@ -48,46 +49,59 @@ export function ResultsPanel({
   userVotes,
   castVote,
 }: ResultsPanelProps) {
+  // ── Idle ──
   if (state.status === "idle") {
     return (
-      <div className="panel-empty">
-        <div className="panel-empty-icon">🌍</div>
-        <h3>Drop a pin anywhere</h3>
-        <p>
+      <div className="flex flex-col items-center justify-center text-center px-6 py-14 gap-3">
+        <span className="text-5xl mb-1">🌍</span>
+        <h3 className="text-[16px] font-semibold text-white">
+          Drop a pin anywhere
+        </h3>
+        <p className="text-[13px] text-moss-muted leading-relaxed max-w-[260px]">
           Click the globe, search for a city, or switch to AI mode to describe
           your trip.
         </p>
-        <div className="panel-empty-examples">
-          <span>Thailand</span>
-          <span>Tokyo</span>
-          <span>Bali</span>
-          <span>London</span>
+        <div className="flex flex-wrap gap-2 justify-center mt-1">
+          {["Thailand", "Tokyo", "Bali", "London"].map((place) => (
+            <span
+              key={place}
+              className="text-[11px] px-3 py-1 bg-moss-darkest border border-moss-muted/20 text-moss-muted rounded-full"
+            >
+              {place}
+            </span>
+          ))}
         </div>
       </div>
     );
   }
 
+  // ── Loading ──
   if (state.status === "searching" || state.status === "loading") {
     return (
-      <div className="panel-loading">
-        <div className="loading-spinner" />
-        <p>
+      <div className="flex flex-col items-center justify-center px-6 py-14 gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-moss-muted/20 border-t-moss-glow animate-spin" />
+        <p className="text-[13px] text-moss-muted">
           {state.status === "searching"
             ? "Identifying location..."
             : "Loading recommendations..."}
         </p>
         {state.location && (
-          <span className="loading-location">{state.location.place_name}</span>
+          <span className="text-[11px] px-3 py-1 bg-moss-darkest border border-moss-muted/20 text-moss-muted rounded-full">
+            {state.location.place_name}
+          </span>
         )}
       </div>
     );
   }
 
+  // ── Error ──
   if (state.status === "error") {
     return (
-      <div className="panel-error">
-        <span>⚠️</span>
-        <p>{state.error}</p>
+      <div className="mx-5 mt-5 flex items-start gap-2.5 bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3">
+        <span className="text-[16px] shrink-0">⚠️</span>
+        <p className="text-[13px] text-red-400 leading-relaxed">
+          {state.error}
+        </p>
       </div>
     );
   }
@@ -103,49 +117,68 @@ export function ResultsPanel({
   ];
 
   return (
-    <div className="results-panel">
-      <div className="results-header">
-        <div className="results-location">
-          <span className="location-flag">{flagEmoji(apps.country_code)}</span>
+    <div className="px-5 py-5 flex flex-col gap-5">
+      {/* location header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-4xl leading-none">
+            {flagEmoji(apps.country_code)}
+          </span>
           <div>
-            <h2 className="location-name">
+            <h2 className="text-[20px] font-semibold text-white leading-tight">
               {location?.city ?? apps.country_name}
             </h2>
-            <p className="location-sub">{location?.place_name}</p>
+            <p className="text-[11px] text-moss-muted mt-0.5">
+              {location?.place_name}
+            </p>
           </div>
         </div>
-        {cached && <span className="cache-badge">⚡ Cached</span>}
+        {cached && (
+          <span className="text-[10px] px-2.5 py-1 rounded-full bg-moss-glow/10 text-moss-glow border border-moss-glow/20">
+            ⚡ Cached
+          </span>
+        )}
       </div>
 
+      {/* cash warning */}
       {hasCashWarning && (
-        <div className="cash-alert">
-          <span>💴</span>
+        <div className="flex gap-3 bg-orange-500/8 border border-orange-500/20 rounded-xl p-4">
+          <span className="text-[22px] shrink-0">💴</span>
           <div>
-            <strong>Cash is king here</strong>
-            <p>
-              Many places in {apps.country_name} don't accept cards. Always
+            <p className="text-[13px] font-semibold text-orange-400 mb-0.5">
+              Cash is king here
+            </p>
+            <p className="text-[12px] text-moss-muted leading-relaxed">
+              Many places in {apps.country_name} don&apos;t accept cards. Always
               carry local currency.
             </p>
           </div>
         </div>
       )}
 
+      {/* categories */}
       {categories.map(({ key, apps: catApps }) => {
         if (!catApps.length) return null;
         const meta = CATEGORY_META[key];
         return (
-          <div key={key} className="category-section">
+          <div key={key} className="flex flex-col gap-2">
+            {/* category header */}
             <div
-              className="category-header"
-              style={{ borderColor: meta.color }}
+              className={`flex items-start gap-2.5 bg-moss-darkest border border-moss-muted/20 border-l-[3px] ${meta.borderColor} rounded-r-lg px-3 py-2.5`}
             >
-              <span className="category-emoji">{meta.emoji}</span>
+              <span className="text-[18px] leading-none mt-0.5">
+                {meta.emoji}
+              </span>
               <div>
-                <h3 className="category-label">{meta.label}</h3>
-                <p className="category-tip">{meta.tip}</p>
+                <h3 className="text-[13px] font-semibold text-white leading-tight">
+                  {meta.label}
+                </h3>
+                <p className="text-[11px] text-moss-muted mt-0.5">{meta.tip}</p>
               </div>
             </div>
-            <div className="apps-list">
+
+            {/* app cards */}
+            <div className="flex flex-col gap-2">
               {catApps.map((app, i) => (
                 <AppCard
                   key={app.id}
@@ -163,11 +196,17 @@ export function ResultsPanel({
       })}
 
       {apps.general_tips?.length > 0 && (
-        <div className="tips-section">
-          <h3 className="tips-title">💡 Local Tips</h3>
-          <ul className="tips-list">
+        <div className="bg-moss-darkest border border-moss-muted/20 rounded-xl px-4 py-4">
+          <h3 className="text-[13px] font-semibold text-white mb-3">
+            💡 Local Tips
+          </h3>
+          <ul className="flex flex-col gap-2">
             {apps.general_tips.map((tip, i) => (
-              <li key={i} className="tip-item">
+              <li
+                key={i}
+                className="flex gap-2 text-[12.5px] text-moss-muted leading-relaxed"
+              >
+                <span className="text-moss-accent shrink-0 mt-0.5">→</span>
                 {tip}
               </li>
             ))}
