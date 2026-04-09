@@ -1,11 +1,11 @@
 import type { LocationResult, RegionAppData } from "../types";
 
-const BASE = process.env.SUPABASE_PROJECT_URL  ? `${process.env.SUPABASE_PROJECT_URL}/rest/v1` : "/api";
+const BASE = process.env.NEXT_PUBLIC_SUPABASE_URL  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1` : "/api";
 
 const HEADERS = () => ({
     "Content-Type": "application/json",
-    apiKey: process.env.SUPABASE_ANON_KEY || "",
-    Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY || ""}`,
+    apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""}`,
 })
 
 

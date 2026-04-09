@@ -115,8 +115,6 @@ export function AISearchPanel({
           ⚠️ {error}
         </p>
       )}
-
-      {/* example chips */}
     </div>
   );
 }

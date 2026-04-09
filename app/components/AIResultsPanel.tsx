@@ -1,3 +1,4 @@
+"use client";
 import type { AISearchResult, AIAppSuggestion } from "../lib/api";
 
 interface AIResultsPanelProps {
@@ -5,9 +6,9 @@ interface AIResultsPanelProps {
 }
 
 const CATEGORY_META = {
-  transport: { label: "Getting around", emoji: "🚌", color: "#3b82f6" },
-  food: { label: "Food & dining", emoji: "🍜", color: "#f97316" },
-  sleep: { label: "Places to sleep", emoji: "🛏️", color: "#8b5cf6" },
+  transport: { label: "Getting around", emoji: "🚌", color: "border-blue-500" },
+  food: { label: "Food & dining", emoji: "🍜", color: "border-orange-500" },
+  sleep: { label: "Places to sleep", emoji: "🛏️", color: "border-purple-500" },
 } as const;
 
 function flagEmoji(code: string) {
@@ -18,14 +19,21 @@ function flagEmoji(code: string) {
 
 function AIAppRow({ app, index }: { app: AIAppSuggestion; index: number }) {
   return (
-    <div className="ai-app-row" style={{ animationDelay: `${index * 55}ms` }}>
-      <div className="ai-app-name-row">
-        <span className="ai-app-name">{app.name}</span>
+    <div
+      className="bg-moss-darkest border border-moss-muted/20 rounded-xl px-4 py-3 mb-2 animate-fadeUp hover:border-moss-muted/40 transition-colors"
+      style={{ animationDelay: `${index * 55}ms` }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-[14px] font-semibold text-white">{app.name}</span>
         {app.cash_warning && (
-          <span className="badge badge-cash">💴 Cash areas</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
+            💴 Cash areas
+          </span>
         )}
       </div>
-      <p className="ai-app-reason">{app.reason}</p>
+      <p className="text-[12.5px] text-moss-muted leading-relaxed">
+        {app.reason}
+      </p>
     </div>
   );
 }
@@ -38,42 +46,57 @@ export function AIResultsPanel({ result }: AIResultsPanelProps) {
   ];
 
   return (
-    <div className="ai-results">
-      <div className="ai-results-header">
-        <div className="ai-results-location">
-          <span className="location-flag">
-            {flagEmoji(result.country_code)}
-          </span>
-          <div>
-            <h2 className="location-name">
-              {result.city ?? result.country_name}
-            </h2>
-            <div className="ai-meta-row">
-              <span className="ai-badge-sm">✦ AI</span>
-              {result.travel_style && (
-                <span className="ai-style-tag">{result.travel_style}</span>
-              )}
-            </div>
+    <div className="px-5 py-5 flex flex-col gap-5">
+      {/* location header */}
+      <div className="flex items-center gap-3">
+        <span className="text-4xl leading-none">
+          {flagEmoji(result.country_code)}
+        </span>
+        <div>
+          <h2 className="text-[20px] font-semibold text-white leading-tight">
+            {result.city ?? result.country_name}
+          </h2>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-moss-glow/10 text-moss-glow border border-moss-glow/20">
+              ✦ AI
+            </span>
+            {result.travel_style && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-moss-darkest border border-moss-muted/20 text-moss-muted capitalize">
+                {result.travel_style}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
+      {/* cash warning */}
       {result.cash_heavy && (
-        <div className="cash-alert">
-          <span>💴</span>
+        <div className="flex gap-3 bg-orange-500/8 border border-orange-500/20 rounded-xl p-4">
+          <span className="text-[22px] shrink-0">💴</span>
           <div>
-            <strong>Cash is king here</strong>
-            <p>Many places don't take cards — carry local currency.</p>
+            <p className="text-[13px] font-semibold text-orange-400 mb-0.5">
+              Cash is king here
+            </p>
+            <p className="text-[12px] text-moss-muted leading-relaxed">
+              Many places don&apos;t take cards — carry local currency.
+            </p>
           </div>
         </div>
       )}
 
+      {/* AI insights */}
       {result.ai_insights?.length > 0 && (
-        <div className="ai-insights-box">
-          <p className="ai-insights-label">✦ AI insights for your trip</p>
-          <ul className="ai-insights-list">
+        <div className="bg-moss-darkest border-l-[3px] border-moss-glow border border-moss-muted/20 rounded-r-xl px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-moss-glow mb-2">
+            ✦ AI insights for your trip
+          </p>
+          <ul className="flex flex-col gap-2">
             {result.ai_insights.map((insight, i) => (
-              <li key={i} className="ai-insight-item">
+              <li
+                key={i}
+                className="flex gap-2 text-[12.5px] text-moss-muted leading-relaxed"
+              >
+                <span className="text-moss-glow shrink-0 mt-0.5">→</span>
                 {insight}
               </li>
             ))}
@@ -81,18 +104,22 @@ export function AIResultsPanel({ result }: AIResultsPanelProps) {
         </div>
       )}
 
+      {/* app categories */}
       {categories.map(({ key, apps }) => {
         if (!apps?.length) return null;
         const meta = CATEGORY_META[key];
         return (
-          <div key={key} className="ai-category-section">
+          <div key={key} className="flex flex-col gap-2">
+            {/* category header */}
             <div
-              className="ai-category-header"
-              style={{ borderColor: meta.color }}
+              className={`flex items-center gap-2 bg-moss-darkest border border-moss-muted/20 border-l-[3px] ${meta.color} rounded-r-lg px-3 py-2`}
             >
-              <span>{meta.emoji}</span>
-              <span className="category-label">{meta.label}</span>
+              <span className="text-[16px]">{meta.emoji}</span>
+              <span className="text-[13px] font-semibold text-white">
+                {meta.label}
+              </span>
             </div>
+            {/* app rows */}
             {apps.map((app, i) => (
               <AIAppRow key={i} app={app} index={i} />
             ))}
