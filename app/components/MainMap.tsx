@@ -13,8 +13,13 @@ export function MainMap({ onMapClick, selectedCoords }: MapboxMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+  // Keep a stable ref to the latest onMapClick so the map never needs to reinit
+  const onMapClickRef = useRef(onMapClick);
+  useEffect(() => {
+    onMapClickRef.current = onMapClick;
+  }, [onMapClick]);
 
-  // Initialize the map
+  // ── Init map ONCE (empty dep array) ──
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -45,42 +50,53 @@ export function MainMap({ onMapClick, selectedCoords }: MapboxMapProps) {
       });
     });
 
+    // Use the ref so this handler is always current without re-creating the map
     map.on("click", (e) => {
-      onMapClick(e.lngLat.lng, e.lngLat.lat);
+      onMapClickRef.current(e.lngLat.lng, e.lngLat.lat);
     });
 
     map.getCanvas().style.cursor = "crosshair";
-
     mapRef.current = map;
-    return () => map.remove();
-  }, [onMapClick]);
 
+    return () => map.remove();
+  }, []); // <-- empty: map is created once, never torn down on re-render
+
+  // ── Fly to + marker whenever selectedCoords changes ──
   useEffect(() => {
     if (!mapRef.current || !selectedCoords) return;
 
-    markerRef.current?.remove();
+    const map = mapRef.current;
 
-    const el = document.createElement("div");
-    el.className = "custom-marker";
-    el.innerHTML = `
-      <div class="marker-outer">
-        <div class="marker-inner"></div>
-        <div class="marker-pulse"></div>
-      </div>
-    `;
+    const fly = () => {
+      markerRef.current?.remove();
 
-    const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
-      .setLngLat(selectedCoords)
-      .addTo(mapRef.current);
+      const el = document.createElement("div");
+      el.className = "custom-marker";
+      el.innerHTML = `
+        <div class="marker-outer">
+          <div class="marker-inner"></div>
+          <div class="marker-pulse"></div>
+        </div>
+      `;
 
-    markerRef.current = marker;
+      markerRef.current = new mapboxgl.Marker({ element: el, anchor: "center" })
+        .setLngLat(selectedCoords)
+        .addTo(map);
 
-    mapRef.current.flyTo({
-      center: selectedCoords,
-      zoom: 5,
-      duration: 1800,
-      essential: true,
-    });
+      map.flyTo({
+        center: selectedCoords,
+        zoom: 5,
+        duration: 1800,
+        essential: true,
+      });
+    };
+
+    // If the style hasn't loaded yet (e.g. first paint), wait for it
+    if (map.isStyleLoaded()) {
+      fly();
+    } else {
+      map.once("style.load", fly);
+    }
   }, [selectedCoords]);
 
   return (
@@ -90,17 +106,17 @@ export function MainMap({ onMapClick, selectedCoords }: MapboxMapProps) {
         .marker-outer { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .marker-inner {
           width: 14px; height: 14px;
-          background: #f97316;
+          background: #A2FF86;
           border-radius: 50%;
-          border: 2.5px solid #fff;
-          box-shadow: 0 0 12px rgba(249,115,22,0.8);
+          border: 2.5px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 14px rgba(162,255,134,0.7);
           z-index: 2;
           position: relative;
         }
         .marker-pulse {
           position: absolute;
           width: 32px; height: 32px;
-          background: rgba(249,115,22,0.25);
+          background: rgba(162,255,134,0.2);
           border-radius: 50%;
           animation: pulse 1.8s ease-out infinite;
           top: 0; left: 0;
